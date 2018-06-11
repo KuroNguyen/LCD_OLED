@@ -119,6 +119,24 @@ void task_ssd1306_display_clear(void *ignore) {
 	vTaskDelete(NULL);
 }
 
+void task_ssd1306_display_clear(void *ignore) {
+	i2c_cmd_handle_t cmd;
+
+	uint8_t *logo = uint8_t *image;
+
+	for (uint8_t i = 0; i < 8; i++) {
+		cmd = i2c_cmd_link_create();
+		i2c_master_start(cmd);
+		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
+		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_SINGLE, true);
+		i2c_master_write_byte(cmd, 0xB0 | i, true);
+
+		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
+		i2c_master_write(cmd, ,
+
+
+
+}
 
 void task_ssd1306_contrast(void *ignore) {
 	i2c_cmd_handle_t cmd;

@@ -44,3 +44,4 @@
 #define OLED_CMD_SET_CHARGE_PUMP        0x8D    // follow with 0x14
 
 #endif /* MAIN_SSD1366_H_ */
+
