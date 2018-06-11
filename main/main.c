@@ -119,10 +119,11 @@ void task_ssd1306_display_clear(void *ignore) {
 	vTaskDelete(NULL);
 }
 
-void task_ssd1306_display_clear(void *ignore) {
+void task_ssd1306_display_logo(void *ignore) {
 	i2c_cmd_handle_t cmd;
 
-	uint8_t *logo = uint8_t *image;
+	uint8_t *logo = image;
+//	logo = image;
 
 	for (uint8_t i = 0; i < 8; i++) {
 		cmd = i2c_cmd_link_create();
@@ -132,7 +133,14 @@ void task_ssd1306_display_clear(void *ignore) {
 		i2c_master_write_byte(cmd, 0xB0 | i, true);
 
 		i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
-		i2c_master_write(cmd, ,
+		i2c_master_write(cmd, logo, 128, true);
+		i2c_master_stop(cmd);
+		i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
+		i2c_cmd_link_delete(cmd);
+		logo = logo + 64;
+	}
+	
+	vTaskDelete(NULL);
 
 
 
@@ -265,8 +273,9 @@ void app_main(void)
 	//xTaskCreate(&task_ssd1306_display_pattern, "ssd1306_display_pattern",  2048, NULL, 6, NULL);
 	xTaskCreate(&task_ssd1306_display_clear, "ssd1306_display_clear",  2048, NULL, 6, NULL);
 	vTaskDelay(100/portTICK_PERIOD_MS);
-	xTaskCreate(&task_ssd1306_display_text, "ssd1306_display_text",  2048,
-		(void *)"Hello world!\nMultiline is OK!\nAnother line\nKuro!!!!", 6, NULL);
+	//xTaskCreate(&task_ssd1306_display_text, "ssd1306_display_text",  2048,
+		//(void *)"Hello world!\nMultiline is OK!\nAnother line\nKuro!!!!", 6, NULL);
 	//xTaskCreate(&task_ssd1306_contrast, "ssid1306_contrast", 2048, NULL, 6, NULL);
-	xTaskCreate(&task_ssd1306_scroll, "ssid1306_scroll", 2048, NULL, 6, NULL);
+	//xTaskCreate(&task_ssd1306_scroll, "ssid1306_scroll", 2048, NULL, 6, NULL);
+	xTaskCreate(&task_ssd1306_display_logo, "ssd1306_display_logo", 2048, NULL, 6, NULL);
 }
