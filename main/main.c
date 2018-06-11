@@ -11,23 +11,42 @@
 #include "ssd1366.h"
 #include "font8x8_basic.h"
 
-#define SDA_PIN GPIO_NUM_15
-#define SCL_PIN GPIO_NUM_2
+#define SDA_PIN 21
+#define SCL_PIN 22
+#define GPIO_BLINK 2
 
 #define tag "SSD1306"
 
+void gpio_conf()
+{
+	gpio_config_t gp_conf;
+	gp_conf.mode = GPIO_MODE_OUTPUT;
+	gp_conf.pin_bit_mask = 1ULL << GPIO_BLINK;
+	gp_conf.pull_down_en = 0;
+	gp_conf.pull_up_en = 0;
+	gpio_config(&gp_conf);
+
+}
+
 void i2c_master_init()
 {
+	esp_err_t espRc;
 	i2c_config_t i2c_config = {
 		.mode = I2C_MODE_MASTER,
 		.sda_io_num = SDA_PIN,
 		.scl_io_num = SCL_PIN,
 		.sda_pullup_en = GPIO_PULLUP_ENABLE,
 		.scl_pullup_en = GPIO_PULLUP_ENABLE,
-		.master.clk_speed = 1000000
+		.master.clk_speed = 400000
 	};
-	i2c_param_config(I2C_NUM_0, &i2c_config);
+	espRc = i2c_param_config(I2C_NUM_0, &i2c_config);
 	i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0);
+	if (espRc == ESP_OK) {
+		ESP_LOGI(tag,"I2C configured successfully");
+	}
+	else {
+		ESP_LOGE(tag,"I2C configuration failed .code: 0x%.2X", espRc);
+	}
 }
 
 void ssd1306_init() {
@@ -38,6 +57,7 @@ void ssd1306_init() {
 	i2c_master_start(cmd);
 	i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
 	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
+
 
 	i2c_master_write_byte(cmd, OLED_CMD_SET_CHARGE_PUMP, true);
 	i2c_master_write_byte(cmd, 0x14, true);
@@ -136,13 +156,21 @@ void task_ssd1306_scroll(void *ignore) {
 	i2c_master_write_byte(cmd, 0x29, true); // vertical and horizontal scroll (p29)
 	i2c_master_write_byte(cmd, 0x00, true);
 	i2c_master_write_byte(cmd, 0x00, true);
-	i2c_master_write_byte(cmd, 0x07, true);
 	i2c_master_write_byte(cmd, 0x01, true);
-	i2c_master_write_byte(cmd, 0x3F, true);
+	i2c_master_write_byte(cmd, 0x01, true);
+	i2c_master_write_byte(cmd, 0x01, true);
 
 	i2c_master_write_byte(cmd, 0xA3, true); // set vertical scroll area (p30)
-	i2c_master_write_byte(cmd, 0x20, true);
-	i2c_master_write_byte(cmd, 0x40, true);
+	i2c_master_write_byte(cmd, 0x00, true);
+	i2c_master_write_byte(cmd, 0x3F, true);
+	/*i2c_master_write_byte(cmd, 0x2E, true); // Deactivate scrolling function
+	i2c_master_write_byte(cmd, 0x26, true); // Right horizontal scroll command
+	i2c_master_write_byte(cmd, 0x00, true); // Dummy byte
+	i2c_master_write_byte(cmd, 0x00, true); // Start page
+	i2c_master_write_byte(cmd, 0x00, true); // Time interval (0 = 5 fr,1 = 64 frs, 2 = 128 fr)
+	i2c_master_write_byte(cmd, 0x02, true); // End page
+	i2c_master_write_byte(cmd, 0x00, true); // Dummy byte
+	i2c_master_write_byte(cmd, 0xff, true); // Dummy byte*/
 
 	i2c_master_write_byte(cmd, 0x2F, true); // activate scroll (p29)
 
@@ -220,7 +248,7 @@ void app_main(void)
 	xTaskCreate(&task_ssd1306_display_clear, "ssd1306_display_clear",  2048, NULL, 6, NULL);
 	vTaskDelay(100/portTICK_PERIOD_MS);
 	xTaskCreate(&task_ssd1306_display_text, "ssd1306_display_text",  2048,
-		(void *)"Hello world!\nMulitine is OK!\nAnother line", 6, NULL);
-	xTaskCreate(&task_ssd1306_contrast, "ssid1306_contrast", 2048, NULL, 6, NULL);
+		(void *)"Hello world!\nMultiline is OK!\nAnother line\nKuro!!!!", 6, NULL);
+	//xTaskCreate(&task_ssd1306_contrast, "ssid1306_contrast", 2048, NULL, 6, NULL);
 	xTaskCreate(&task_ssd1306_scroll, "ssid1306_scroll", 2048, NULL, 6, NULL);
 }
