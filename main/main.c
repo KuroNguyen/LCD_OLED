@@ -125,7 +125,7 @@ void task_ssd1306_display_logo(void *ignore) {
 	uint8_t *logo = image;
 //	logo = image;
 
-	for (uint8_t i = 0; i < 8; i++) {
+	for (uint8_t i = 0; i < 1; i++) {
 		cmd = i2c_cmd_link_create();
 		i2c_master_start(cmd);
 		i2c_master_write_byte(cmd, (OLED_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
@@ -137,7 +137,7 @@ void task_ssd1306_display_logo(void *ignore) {
 		i2c_master_stop(cmd);
 		i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
 		i2c_cmd_link_delete(cmd);
-		logo = logo + 64;
+		logo = logo + 128;
 	}
 	
 	vTaskDelete(NULL);
